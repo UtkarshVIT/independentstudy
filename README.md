@@ -16,5 +16,6 @@ Here I calculated the ratio of count of each POS word to the total words in a se
 #### 3. Words as tf-idf
 
 Here is distributed the data 85% - 15% into training and test set and created a document vector using the training set. I created two documents for 'sentences with problems' and 'sentences without problems'. I computed the sum of the tf-idf value for each word in a sentence using the document vector and classified the sentence into the document for which it had the max sum.
-This process could classify 70% of the sentences correctly.
+
+This process could classify **70%** of the sentences correctly.
 
