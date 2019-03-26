@@ -32,7 +32,6 @@ list1 = list()
 list2 = list()
 vectorizer = 2
 X = 2
-'''
 def createTfIDFFeature(list1, list2):
 	global vectorizer
 	global X
@@ -66,12 +65,22 @@ def getSenScore(sen):
 def test_classifier():
 	global vectorizer
 	global X
+	tot_count = 0.0
+	corr_count = 0.0
 	with io.open('expertiza_new_clean_data_test_set.csv', encoding='utf8', errors='ignore') as csv_file:
 	   	csv_reader = csv.reader(csv_file, delimiter=',')
+	   	
 	   	for row in csv_reader:
-	   		sen = ''.join(x for x in row[0] if x.isalpha() or x ==' ')
-	   		res = getSenScore(sen)
-	   		print res[0], res[1], row[2]
+	   		if row[2] != 0:
+		   		sen = ''.join(x for x in row[0] if x.isalpha() or x ==' ')
+		   		tot_count += 1.0
+		   		res = getSenScore(sen)
+		   		
+		   		final_res = -1 if res[0]< res[1] else 1
+		   		print final_res, row[2]
+		   		if str(final_res) == row[2]:
+		   			corr_count += 1.0
+	print 'Final Result: ', corr_count/tot_count
 
 createTfIDFFeature(sen_list_with_problem, sen_list_without_problem)
 test_classifier()
@@ -129,7 +138,7 @@ def sentimentScoreAttributeAnalysis():
 	print "Mean POS value for Sen without problems: ", ans2/len(sen_list_without_problem)
 
 sentimentScoreAttributeAnalysis()
-
+'''
 
 '''
 def getWordTypeCout():
