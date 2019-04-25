@@ -9,6 +9,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import sys
 from collections import Counter
 from decimal import *
+import pandas as pd
+import numpy
 
 getcontext().prec = 3
 reload(sys)
@@ -19,14 +21,23 @@ sid = SentimentIntensityAnalyzer()
 sen_list_with_problem = list()
 sen_list_without_problem = list()
 
-
-with io.open('expertiza_new_clean_data.csv', encoding='utf8', errors='ignore') as csv_file:
+'''
+with io.open('train_set.csv', encoding='utf8', errors='ignore') as csv_file:
    	csv_reader = csv.reader(csv_file, delimiter=',')
    	for row in csv_reader:
    		if row[2] == '1':
 			sen_list_with_problem.append(''.join(x for x in row[0] if x.isalpha() or x ==' '))
 		elif row[2] == '-1':
 			sen_list_without_problem.append(''.join(x for x in row[0] if x.isalpha() or x ==' '))
+'''
+
+def getSentimentScore(sentence, senti):
+	temp = sentence.split('.')
+	count_temp = 0.0
+	for sen in temp:		
+		count_temp += sid.polarity_scores(sen)[senti]
+	print count_temp/len(temp)
+	return count_temp/len(temp)
 
 list1 = list()
 list2 = list()
@@ -39,6 +50,7 @@ def createTfIDFFeature(list1, list2):
 	doc2 = ' '.join(list2)
 	vectorizer = TfidfVectorizer()
 	X = vectorizer.fit_transform([doc1, doc2])
+
 
 def getIndex(word_test):
 	global vectorizer
@@ -62,6 +74,90 @@ def getSenScore(sen):
 			score_class2 += X[1, index]
 	return [score_class1, score_class2]
 
+#createTfIDFFeature(sen_list_with_problem, sen_list_without_problem)
+#df = pd.read_csv("train_set2.csv")
+
+def createScores():
+	df = pd.read_csv("train_set3.csv")
+	for i in range(0, df.shape[0]):
+		print 'done' + str(i) + "/" + str(df.shape[0])
+		sen = ''.join(x for x in df.comments[i] if x.isalpha() or x ==' ')
+		tokens = nltk.word_tokenize(sen.lower())
+		text = nltk.Text(tokens)
+		tags = nltk.pos_tag(text)
+		NN_count = 0.0
+		VB_count = 0.0
+		AD_count= 0.0
+		ADV_count = 0.0
+		counts = Counter(tag for word,tag in tags)
+		tot = sum(counts.values())
+		for ele in counts:
+			if ele == 'NN' or ele == 'NNP' or ele == 'NNS':
+				NN_count += counts[ele]
+			if ele == 'RB' or ele == 'RBR' or ele == 'RBS':
+				ADV_count += counts[ele]
+			if ele == 'VB' or ele == 'VBD' or ele == 'VBG' or ele == 'VBN' or ele == 'VBP' or ele == 'VBZ':
+				VB_count += counts[ele]
+			if ele == 'JJ' or ele == 'JJR' or ele == 'JJS':
+				AD_count += counts[ele]
+		if tot != 0:
+			df.NN[i] = round(NN_count/tot, 2)
+			df.RB[i] = round(VB_count/tot, 2)
+			df.VB[i] = round(AD_count/tot, 2)
+			df.JJ[i] = round(ADV_count/tot, 2)
+	df.to_csv('train_set4.csv', index=False)
+createScores()
+
+
+
+def cor_test():
+	for i in range(0, df.shape[0]):
+	#for i in range(0, 5):
+		print 'done: ' + str(i) + '/' + str(df.shape[0])
+		df.neg_senti[i] = getSentimentScore(df.comments[i], 'neg') 
+		df.pos_senti[i] = getSentimentScore(df.comments[i], 'pos')
+		res = getSenScore(df.comments[i])
+		df.tf_score[i] = -1 if res[0]< res[1] else 1
+	df.to_csv('train_set2.csv', index=False)
+
+	res = 0.0
+	cor_res = 0.0
+	for i in range(0, df.shape[0]):
+		if df.tf_score[i].astype(numpy.int64) == df.value[i]:
+			cor_res += 1.0
+		res += 1.0
+
+	print cor_res/res, res, cor_res
+
+
+'''
+check = 0
+ls = []
+for i in range(0, df.shape[0]):
+	if df.value[i] == numpy.int64(check):
+		ls.append(i)
+print ls
+df = df.drop(df.index[ls])
+df.to_csv('train_set3.csv', index=False)
+
+df = pd.read_csv("train_set3.csv")
+ls = []
+for i in range(0, df.shape[0]):
+	if df.value[i] == numpy.int64(check):
+		ls.append(i)
+print ls
+'''
+
+
+'''
+check = 0
+print type(check), type(numpy.int64(check)), type(df.value[0]), numpy.int64(check), df.value[0]
+df[df.value != numpy.int64(check)]
+df.to_csv('train_set3.csv', index=False)
+'''
+
+'''
+
 def test_classifier():
 	global vectorizer
 	global X
@@ -81,9 +177,6 @@ def test_classifier():
 		   		if str(final_res) == row[2]:
 		   			corr_count += 1.0
 	print 'Final Result: ', corr_count/tot_count
-
-createTfIDFFeature(sen_list_with_problem, sen_list_without_problem)
-test_classifier()
 
 
 '''
@@ -137,10 +230,10 @@ def sentimentScoreAttributeAnalysis():
 	print "Mean POS value for Sen with problems: ", ans1/len(sen_list_with_problem)
 	print "Mean POS value for Sen without problems: ", ans2/len(sen_list_without_problem)
 
-sentimentScoreAttributeAnalysis()
+#sentimentScoreAttributeAnalysis()
 '''
 
-'''
+
 def getWordTypeCout():
 	NN = []
 	VB = []
